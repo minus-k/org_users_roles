@@ -6,8 +6,6 @@ class Organization < ActiveRecord::Base
 
   has_many :roles
   has_many :users, through: :roles
-
-  delegate :admins, :denied, to: :roles
               
   # Not sure if needed but why not
   def check_node_level

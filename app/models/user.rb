@@ -3,7 +3,7 @@ class User < ActiveRecord::Base
   has_many :organizations, through: :roles
 
   # Retrieve organizations that the user has admin access to.
-  #scope get_organizations
-  #  self.admins.organizations #??
-  #end
+  def is_admin
+    self.roles.where(type: 'Admin')
+  end
 end
