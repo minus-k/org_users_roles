@@ -1,5 +1,5 @@
 class Organization < ActiveRecord::Base
-  # before_create :check_node_level
+  #before_create :check_node_level
 
   has_many :children, class_name: Organization, foreign_key: :parent_id
   belongs_to :parent, class_name: Organization
@@ -7,10 +7,19 @@ class Organization < ActiveRecord::Base
   has_many :roles
   has_many :users, through: :roles
               
-  # Not sure if needed but why not
+  # If node is a grandchild, keep as a leaf
   def check_node_level
-  # If root node exists, save as a child of root.
-  # If self is a grandchild of root.  Do not save, keep a leaf.
+  end
+
+  # Check nodes and return Organizations a user has access to.
+  def set_permissions(uid)
+    level = self
+    user_role = level.roles.where(user_id: uid)
+    while user_role.empty? && level.has_parent?(level)
+      level = level.parent
+      user_role = level.roles.where(user_id: uid)
+    end
+    user_role.first
   end
 
   # Check self and parents for admins.
@@ -23,13 +32,7 @@ class Organization < ActiveRecord::Base
      self.roles.where(type: 'Denied')
    end
 
-  # Add user as an admin
-  def add_admin(user)
-    self.admins << user
-  end
-
-  # Add user as a denied user
-  def deny_user(user)
-    self.denied << user
-  end
+   def has_parent?(level)
+     !level.parent.nil?
+   end
 end
