@@ -17,7 +17,7 @@ class Organization < ActiveRecord::Base
   end
 
   # Return nodes that a given user has access to.
-  def show_permissions(uid)
+  def get_allowed_organizations(uid)
     orgs = []
     default_role = self.roles.where(user_id: uid)
     
@@ -37,15 +37,24 @@ class Organization < ActiveRecord::Base
     
     # Add nodes user has permission for
     self.children.each do |child|
-      role = child.roles.where(user_id: uid).first
-      if role.nil? || !role.is_denied?
-        orgs << child 
+      if child.children.exists?
+        child.children.each do |grandchild|
+          set_orgs(orgs, grandchild, uid)
+        end
       end
+      set_orgs(orgs, child, uid)
     end
     orgs
   end
 
-   def has_parent?(level)
-     !level.parent.nil?
-   end
+  def set_orgs(orgs, org, uid) 
+    role = org.roles.where(user_id: uid).first
+    if role.nil? || !role.is_denied?
+      orgs << org 
+    end
+  end
+
+  def has_parent?(level)
+   !level.parent.nil?
+  end
 end
